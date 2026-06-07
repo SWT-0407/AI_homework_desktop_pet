@@ -64,6 +64,8 @@ data/debug_live2d_frame_*.png
 
 # Auto-generated patched model3.json files
 *.desktop_pet.generated.model3.json
+*.patched.model3.json
+assets/models/doro/Doro.patched.model3.json
 analyze_*.py
 fix_*.py
 temp_*.py
