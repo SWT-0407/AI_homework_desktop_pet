@@ -1,8 +1,19 @@
+<div align="center">
+
 # AI Homework Desktop Pet
 
-基于 PySide6、Live2D、视觉感知、NLP/TTS 和云端同步框架的智能桌面宠物项目。项目源自山东大学《人工智能引论》课程设计，采用模块化分工方式组织 UI、Vision、TTS/NLP、State 与 Cloud Sync 能力。
+**一个把 Live2D、视觉感知、对话、语音、状态系统和云端共养组合到桌面的智能宠物原型**
 
-仓库地址：[SWT-0407/AI_homework_desktop_pet](https://github.com/SWT-0407/AI_homework_desktop_pet)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![PySide6](https://img.shields.io/badge/UI-PySide6-41CD52?logo=qt&logoColor=white)](https://doc.qt.io/qtforpython-6/)
+[![Tests](https://img.shields.io/badge/tests-241%20passed%20%7C%203%20known%20failures-orange)](#测试)
+
+山东大学《人工智能引论》课程设计 · Windows 优先 · 本地能力优先 · 外部服务可选
+
+</div>
+
+> [!NOTE]
+> 这是课程项目和研究原型，不是已发布的桌面产品。摄像头、云端、Qwen-VL、DeepFace、GPT-SoVITS 和 OpenVoice 均为可选能力；缺少密钥、模型或设备时，应用会尽量降级，但不同 Python/驱动环境的完整兼容性尚未验证。
 
 ## 项目概览
 
@@ -15,6 +26,27 @@ AI Homework Desktop Pet 是一个运行在桌面的虚拟陪伴应用。桌宠�
 - TTS/NLP 层负责 DeepSeek 对话、Prompt 构建、聊天记忆、情绪分析和语音合成。
 - State 层负责宠物心情、能量、亲密度、用户画像、行为决策和状态持久化。
 - Cloud 层负责 Supabase 房间、状态同步、互动事件和联机共养的接口封装。
+
+## 角色与动作预览
+
+<div align="center">
+  <img src="assets/animations/这狗_anim_idle.gif" alt="桌宠待机动画" width="180" />
+  <img src="assets/animations/这狗_anim_敬礼.gif" alt="桌宠敬礼动画" width="180" />
+  <img src="assets/animations/这狗_anim_星星眼.gif" alt="桌宠星星眼动画" width="180" />
+</div>
+
+仓库包含静态/GIF 角色与 Live2D 资源。上图展示的是内置动作素材；实际运行时，桌宠显示在透明置顶窗口中，并通过菜单、对话和状态事件切换行为。
+
+## 运行层级
+
+| 模式 | 启动方式 | 需要的资源 | 适用场景 |
+| --- | --- | --- | --- |
+| 轻量演示 | `.\run_demo.bat` | PySide6、PyOpenGL、Live2D 运行时和内置素材 | 课堂演示；默认关闭摄像头和重型视觉模块 |
+| 本地交互 | `python -m app.main` | 上述依赖，可选摄像头/麦克风 | 桌宠、聊天、本地状态、规则和离线 TTS |
+| 视觉增强 | 在 `.env` 开启 camera/gesture/DeepFace/Qwen-VL | 摄像头、MediaPipe/DeepFace，Qwen-VL 需要密钥 | 手势、用户状态、表情和视觉调试 |
+| 云端共养 | 配置 Supabase 并执行表结构 | Supabase 项目、URL、anon key | 房间状态与互动事件同步 |
+
+轻量演示脚本只设置当前进程的环境变量，不会覆盖 `.env`。需要长期保存配置时，可从 `.env.demo.example` 选择变量合并到自己的 `.env`。
 
 ## 主要功能
 
@@ -69,6 +101,24 @@ AI Homework Desktop Pet 是一个运行在桌面的虚拟陪伴应用。桌宠�
 - Edge TTS / pyttsx3 / GPT-SoVITS / OpenVoice：语音合成与语音风格处理。
 - Supabase：云端共养数据同步。
 - pytest：单元测试。
+
+## 架构
+
+```mermaid
+flowchart LR
+    UI["PySide6 / Live2D UI"] --> BUS["事件与控制层"]
+    CAM["共享摄像头"] --> V["Vision: 状态 / 手势 / 表情"]
+    V --> BUS
+    BUS --> STATE["宠物状态与行为规则"]
+    BUS --> NLP["对话 / 画像 / 主动事件"]
+    NLP --> TTS["Edge TTS / pyttsx3 / 可选本地语音"]
+    STATE --> UI
+    TTS --> UI
+    STATE -. 用户启用 .-> CLOUD["Supabase 共养"]
+    CLOUD -. 同步事件 .-> BUS
+```
+
+`app/main.py` 负责组合模块；`models/` 保存视觉、对话、语音、状态和云端领域逻辑；UI 通过接口和事件连接这些模块，避免直接操作 Supabase 或模型服务。
 
 ## 目录结构
 
@@ -201,6 +251,9 @@ Windows 轻量演示模式：
 
 轻量演示模式会关闭摄像头、手势、DeepFace、Qwen-VL 等重能力，适合课堂展示或没有摄像头权限的环境。
 
+> [!TIP]
+> 首次运行建议从轻量演示开始。确认窗口和 Live2D 正常后，再逐项启用摄像头、手势、模型 API 和云同步；这样更容易定位驱动、权限或依赖问题。
+
 ## 常用运行配置
 
 | 变量 | 默认值 | 说明 |
@@ -218,9 +271,7 @@ Windows 轻量演示模式：
 | `DESKTOP_PET_CAMERA_HEIGHT` | `240` | 摄像头采集高度 |
 | `DESKTOP_PET_USER_DETECT_INTERVAL` | `0.4` | 用户状态检测间隔，单位秒 |
 | `DESKTOP_PET_GESTURE_POLL_MS` | `200` | 手势轮询间隔，单位毫秒 |
-| `DESKTOP_PET_CLOUD_ENABLED` | `true` | 是否启用云同步逻辑 |
-| `DESKTOP_PET_CLOUD_ROOM_CODE` | 空 | 自动加入的云端房间号 |
-| `DESKTOP_PET_MEMBER_ID` | 本机节点 ID | 云端共养成员 ID |
+云端模块当前只读取 `SUPABASE_URL` 和 `SUPABASE_ANON_KEY`；房间号与成员状态通过应用内云端面板管理。README 不再列出代码尚未读取的 `DESKTOP_PET_CLOUD_*` 环境变量。
 
 ## 交互说明
 
@@ -245,7 +296,6 @@ Windows 轻量演示模式：
 ```env
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-anon-key
-DESKTOP_PET_CLOUD_ROOM_CODE=TEAMROOM001
 ```
 
 4. 启动应用后通过云端面板加入或同步房间。
@@ -257,7 +307,7 @@ DESKTOP_PET_CLOUD_ROOM_CODE=TEAMROOM001
 运行全部单元测试：
 
 ```bash
-pytest
+python -m pytest -q
 ```
 
 运行云端 stub 测试：
@@ -273,6 +323,13 @@ python scripts/test_supabase_real_connection.py
 ```
 
 真实连接测试需要 `.env` 中配置 `SUPABASE_URL` 和 `SUPABASE_ANON_KEY`，并且已创建对应表结构。
+
+最近一次本地核验（2026-08-09，Python 3.14）结果为 **241 passed、3 failed**。已知失败集中在团队 C/D 接口的事件数据结构和 mood 状态预期：
+
+- `CloudPetEvent` 的测试参数与当前数据类字段不一致。
+- 两个测试仍期待旧的 mood 自动切换行为，而当前实现保持 `neutral`。
+
+因此，测试套件能覆盖大量纯逻辑模块，但当前分支不能标记为全绿。提交新功能时请先判断是恢复旧行为，还是更新测试契约，不要仅为通过测试而隐式改变用户状态逻辑。
 
 ## 辅助脚本与工具
 
@@ -292,6 +349,13 @@ python scripts/test_supabase_real_connection.py
 - DeepFace、MediaPipe、PyAudio、Live2D 相关依赖在不同 Python 版本和平台上的安装体验差异较大，建议优先在 Windows + Python 3.10/3.11 环境运行完整桌宠 UI。
 - Mac/Linux 支持不是当前主要目标，部分透明窗口、置顶和系统活动识别能力依赖 Windows API。
 
+## 隐私与素材许可
+
+- 摄像头、麦克风、前台窗口活动和聊天内容都可能包含个人信息；按需启用，并在提交前检查 `data/`、`logs/`、`assets/chat_history/` 和 `assets/ai_memory/`。
+- `.gitignore` 只能阻止新增的未跟踪文件；已经被 Git 跟踪的历史数据不会自动移除。公开仓库前应再次运行 `git ls-files` 审计。
+- `SUPABASE_ANON_KEY` 仍需配合 Row Level Security，不能把 anon key 本身视为完整访问控制。
+- Live2D 模型、角色图片、字体、音频和第三方模型可能有独立许可。仓库当前没有统一的开源许可证文件，不应推定所有素材可商用或再分发。
+
 ## 当前状态
 
-项目已经具备桌宠 UI、Live2D 模型、对话、TTS、视觉感知、状态系统、VPet 玩法和云同步接口的主体实现。后续可继续完善真实视觉 API 对接、语音输入、多桌宠同时显示、云端事件合并和跨平台兼容。
+项目已经具备桌宠 UI、Live2D 模型、对话、TTS、视觉感知、状态系统、VPet 玩法和云同步接口的主体实现。当前优先事项是统一重复的 UI 实现路径、修复 3 个测试契约差异、建立干净的演示截图/录屏、审计已跟踪的运行数据，并继续完善真实视觉 API、语音输入、云端事件合并和跨平台兼容。
